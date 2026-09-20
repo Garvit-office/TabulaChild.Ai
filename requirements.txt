@@ -5,3 +5,6 @@ pypdf
 sentence-transformers
 requests
 beautifulsoup4
+flask
+flask-cors
+pypdf
