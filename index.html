@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evolving Human-Like AI Agent</title>
+    <style>
+        :root { --bg: #090d16; --panel: #131a26; --accent: #38bdf8; --text: #f8fafc; --text-mut: #64748b; }
+        body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 1000px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .panel { background: var(--panel); border-radius: 12px; padding: 20px; border: 1px solid #1e293b; display: flex; flex-direction: column; }
+        h2 { margin-top: 0; font-size: 1.2rem; color: var(--accent); border-bottom: 1px solid #1e293b; padding-bottom: 10px; }
+        .tabs { display: flex; background: var(--bg); padding: 4px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #1e293b; }
+        .tab-btn { flex: 1; padding: 10px; border: none; background: transparent; color: var(--text-mut); border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85rem; }
+        .tab-btn.active { background: var(--accent); color: var(--bg); }
+        .display-window { flex-grow: 1; overflow-y: auto; height: 340px; background: var(--bg); border-radius: 8px; padding: 15px; border: 1px solid #1e293b; margin-bottom: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .msg { padding: 10px 14px; border-radius: 8px; max-width: 85%; font-size: 0.9rem; line-height: 1.4; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .msg.user { background: #1e293b; align-self: flex-end; border-bottom-right-radius: 2px; }
+        .msg.agent { background: #0284c7; align-self: flex-start; border-bottom-left-radius: 2px; }
+        .controls { display: flex; gap: 10px; }
+        input[type="text"] { flex-grow: 1; background: var(--bg); border: 1px solid #1e293b; border-radius: 8px; padding: 12px; color: var(--text); outline: none; }
+        button.action-btn { background: var(--accent); color: var(--bg); border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .metric-card { background: var(--bg); border: 1px solid #1e293b; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 20px; }
+        .metric-value { font-size: 2rem; font-weight: bold; color: var(--accent); }
+        .upload-box { border: 2px dashed #1e293b; background: var(--bg); border-radius: 8px; padding: 30px; text-align: center; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="panel">
+            <h2>🤖 Natural Evolving Agent Terminal</h2>
+            <div class="tabs">
+                <button id="tab-CHAT" class="tab-btn active" onclick="switchMode('CHAT')">💬 TALK & EVALUATE</button>
+                <button id="tab-TRAIN" class="tab-btn" onclick="switchMode('TRAIN')">🧠 TEACH NEW FACT</button>
+            </div>
+            <div class="display-window" id="console-logs">
+                <div class="msg agent">Hello! I am completely empty right now. Whatever we talk about or whatever PDF you upload, I will process it and adapt my speech style to answer you like a real peer. Try teaching me something!</div>
+            </div>
+            <div class="controls">
+                <input type="text" id="console-input" placeholder="Type a message..." onkeypress="checkEnter(event)">
+                <button class="action-btn" onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>📊 Live Evolving Telemetry</h2>
+            <div class="metric-card">
+                <div>Total Synaptic Blocks Programmed</div>
+                <div class="metric-value" id="nodes-counter">0</div>
+            </div>
+            
+            <h2>📂 Document RAG Upload Pipeline</h2>
+            <div class="upload-box" onclick="document.getElementById('file-picker').click()">
+                <div style="font-size: 2rem; margin-bottom: 5px;">📄</div>
+                <div id="upload-status" style="font-size: 0.85rem; color: var(--text-mut);">Index a PDF into my blank memory vault</div>
+                <input type="file" id="file-picker" style="display:none" accept=".pdf" onchange="uploadPDFToServer()">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 🛠️ CONFIGURATION LINKAGE WRAPPER
+        const BACKEND_URL = "https://tabulachild-ai.onrender.com/"; 
+
+        let currentMode = "CHAT";
+
+        function switchMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('tab-' + mode).classList.add('active');
+            
+            let hint = "Chat naturally... I will search my database and previous conversations!";
+            if (mode === "TRAIN") hint = "Format fact: concept -> response data (e.g. your name -> Leo)";
+            document.getElementById('console-input').placeholder = hint;
+        }
+
+        function checkEnter(e) { if (e.key === 'Enter') sendMessage(); }
+
+        function sendMessage() {
+            const inputField = document.getElementById('console-input');
+            const dataText = inputField.value.trim();
+            if(!dataText) return;
+
+            appendLog(dataText, 'user');
+            inputField.value = '';
+
+            fetch(`${BACKEND_URL}/interact`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mode: currentMode, payload: dataText })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.output) appendLog(data.output, 'agent');
+                document.getElementById('nodes-counter').innerText = data.tokens;
+            });
+        }
+
+        function uploadPDFToServer() {
+            const picker = document.getElementById('file-picker');
+            if(picker.files.length === 0) return;
+            
+            const dataObj = new FormData();
+            dataObj.append('file', picker.files[0]);
+            document.getElementById('upload-status').innerText = "⏳ Extracting text nodes into blank tracking vector list...";
+
+            fetch(`${BACKEND_URL}/upload`, { method: 'POST', body: dataObj })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('upload-status').innerText = data.message;
+                document.getElementById('nodes-counter').innerText = data.tokens;
+                appendLog("System Update: " + data.message, 'agent');
+            });
+        }
+
+        function appendLog(text, role) {
+            const box = document.getElementById('console-logs');
+            const div = document.createElement('div');
+            div.className = `msg ${role}`;
+            div.innerText = text;
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
+        }
+    </script>
+</body>
+</html>
