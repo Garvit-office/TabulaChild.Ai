@@ -1,6 +1,7 @@
- torch
-   flask
-   pypdf
-   sentence-transformers
-   requests
-   beautifulsoup4
+flask
+flask-cors
+torch
+pypdf
+sentence-transformers
+requests
+beautifulsoup4
