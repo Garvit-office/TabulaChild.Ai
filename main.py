@@ -5,15 +5,17 @@ from flask_cors import CORS
 from pypdf import PdfReader
 
 app = Flask(__name__)
-# Enable CORS so your free GitHub Pages frontend can securely pass signals here
+# Enable CORS so your free GitHub Pages frontend can securely cross-communicate
 CORS(app)
 
 class HumanLikeBlankAgent:
     def __init__(self):
+        # Memory states initialized to a completely blank canvas
         self.chat_history_vault = []   
         self.rag_document_chunks = []  
         self.total_nodes_indexed = 0
         
+        # 🎭 Personality phrasing templates for a human-like response layer
         self.human_intros = [
             "Oh, based on what we talked about earlier, ",
             "If I remember correctly from our chat, ",
@@ -31,6 +33,8 @@ class HumanLikeBlankAgent:
     def learn_from_chat(self, user_phrase: str, agent_reply: str):
         clean_user = user_phrase.strip().lower()
         clean_reply = agent_reply.strip()
+        
+        # Commit directly to dynamic long-term historical matrices
         self.chat_history_vault.append({"user": clean_user, "reply": clean_reply})
         self.total_nodes_indexed += len(clean_user.split()) + len(clean_reply.split())
         return f"✨ Memory committed! I will now remember that when you talk about '{clean_user}', I should think about '{clean_reply}'."
@@ -42,13 +46,15 @@ class HumanLikeBlankAgent:
             for page in reader.pages:
                 text = page.extract_text()
                 if text:
+                    # Break text rows into contextual text nodes
                     sentences = [s.strip() for s in text.split('.') if len(s.strip()) > 8]
                     extracted_sentences.extend(sentences)
             if not extracted_sentences:
                 return "⚠️ Document parsing returned an empty signature."
+                
             self.rag_document_chunks.extend(extracted_sentences)
             self.total_nodes_indexed += len(extracted_sentences)
-            return f"🏆 Fed {len(extracted_sentences)} text vectors into my RAG database."
+            return f"🏆 Populated the empty RAG container with {len(extracted_sentences)} document context blocks."
         except Exception as e:
             return f"❌ PDF Processing Error: {str(e)}"
 
@@ -59,6 +65,8 @@ class HumanLikeBlankAgent:
         query_words = set(clean_query.split())
         best_memory_match = None
         max_overlap = 0
+        
+        # Search backward through dialogue updates
         for memory in reversed(self.chat_history_vault):
             memory_words = set(memory["user"].split())
             overlap = len(query_words.intersection(memory_words))
@@ -74,6 +82,8 @@ class HumanLikeBlankAgent:
         query_words = set(clean_query.split())
         best_match = None
         max_overlap = 0
+        
+        # Parse through empty RAG cells using text matching matrices
         for chunk in self.rag_document_chunks:
             chunk_words = set(chunk.lower().split())
             overlap = len(query_words.intersection(chunk_words))
@@ -112,8 +122,8 @@ def handle_interaction():
     payload = data.get('payload', '').strip()
     
     if mode == "TRAIN":
-        if "->" in payload:
-            phrase, reply = payload.split("->", 1)
+        if " -> " in payload:
+            phrase, reply = payload.split(" -> ", 1)
             agent_response = agent.learn_from_chat(phrase, reply)
         else:
             agent_response = "⚠️ Invalid configuration format! Use: keyword phrase -> what I should remember"
@@ -132,6 +142,5 @@ def handle_interaction():
     return jsonify({"output": agent_response, "tokens": agent.total_nodes_indexed})
 
 if __name__ == '__main__':
-    # Dynamic port configuration matching for Render cloud requirements
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
