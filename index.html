@@ -1,126 +1,943 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Evolving Human-Like AI Agent</title>
-    <style>
-        :root { --bg: #090d16; --panel: #131a26; --accent: #38bdf8; --text: #f8fafc; --text-mut: #64748b; }
-        body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; justify-content: center; }
-        .container { width: 100%; max-width: 1000px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .panel { background: var(--panel); border-radius: 12px; padding: 20px; border: 1px solid #1e293b; display: flex; flex-direction: column; }
-        h2 { margin-top: 0; font-size: 1.2rem; color: var(--accent); border-bottom: 1px solid #1e293b; padding-bottom: 10px; }
-        .tabs { display: flex; background: var(--bg); padding: 4px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #1e293b; }
-        .tab-btn { flex: 1; padding: 10px; border: none; background: transparent; color: var(--text-mut); border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85rem; }
-        .tab-btn.active { background: var(--accent); color: var(--bg); }
-        .display-window { flex-grow: 1; overflow-y: auto; height: 340px; background: var(--bg); border-radius: 8px; padding: 15px; border: 1px solid #1e293b; margin-bottom: 15px; display: flex; flex-direction: column; gap: 10px; }
-        .msg { padding: 10px 14px; border-radius: 8px; max-width: 85%; font-size: 0.9rem; line-height: 1.4; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .msg.user { background: #1e293b; align-self: flex-end; border-bottom-right-radius: 2px; }
-        .msg.agent { background: #0284c7; align-self: flex-start; border-bottom-left-radius: 2px; }
-        .controls { display: flex; gap: 10px; }
-        input[type="text"] { flex-grow: 1; background: var(--bg); border: 1px solid #1e293b; border-radius: 8px; padding: 12px; color: var(--text); outline: none; }
-        button.action-btn { background: var(--accent); color: var(--bg); border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .metric-card { background: var(--bg); border: 1px solid #1e293b; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 20px; }
-        .metric-value { font-size: 2rem; font-weight: bold; color: var(--accent); }
-        .upload-box { border: 2px dashed #1e293b; background: var(--bg); border-radius: 8px; padding: 30px; text-align: center; cursor: pointer; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="panel">
-            <h2>🤖 Natural Evolving Agent Terminal</h2>
-            <div class="tabs">
-                <button id="tab-CHAT" class="tab-btn active" onclick="switchMode('CHAT')">💬 TALK & EVALUATE</button>
-                <button id="tab-TRAIN" class="tab-btn" onclick="switchMode('TRAIN')">🧠 TEACH NEW FACT</button>
-            </div>
-            <div class="display-window" id="console-logs">
-                <div class="msg agent">Hello! I am completely empty right now. Whatever we talk about or whatever PDF you upload, I will process it and adapt my speech style to answer you like a real peer. Try teaching me something!</div>
-            </div>
-            <div class="controls">
-                <input type="text" id="console-input" placeholder="Type a message..." onkeypress="checkEnter(event)">
-                <button class="action-btn" onclick="sendMessage()">Send</button>
-            </div>
-        </div>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Child bot</title>
 
-        <div class="panel">
-            <h2>📊 Live Evolving Telemetry</h2>
-            <div class="metric-card">
-                <div>Total Synaptic Blocks Programmed</div>
-                <div class="metric-value" id="nodes-counter">0</div>
-            </div>
-            
-            <h2>📂 Document RAG Upload Pipeline</h2>
-            <div class="upload-box" onclick="document.getElementById('file-picker').click()">
-                <div style="font-size: 2rem; margin-bottom: 5px;">📄</div>
-                <div id="upload-status" style="font-size: 0.85rem; color: var(--text-mut);">Index a PDF into my blank memory vault</div>
-                <input type="file" id="file-picker" style="display:none" accept=".pdf" onchange="uploadPDFToServer()">
-            </div>
-        </div>
+<style>
+:root{
+  --bg:#070b14;
+  --panel:#0d1422;
+  --panel2:#111a2b;
+  --border:#1d2a3d;
+  --text:#f5f7fb;
+  --muted:#7f8da3;
+  --accent:#38bdf8;
+  --accent2:#6366f1;
+  --success:#22c55e;
+  --danger:#ef4444;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:
+    radial-gradient(circle at 15% 10%,rgba(56,189,248,.08),transparent 30%),
+    radial-gradient(circle at 90% 80%,rgba(99,102,241,.08),transparent 30%),
+    var(--bg);
+  color:var(--text);
+}
+
+.app{
+  width:min(1400px,94%);
+  margin:32px auto;
+}
+
+/* HEADER */
+
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:24px;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+
+.logo{
+  width:46px;
+  height:46px;
+  border-radius:14px;
+  display:grid;
+  place-items:center;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  box-shadow:0 0 30px rgba(56,189,248,.2);
+  font-size:22px;
+}
+
+.brand h1{
+  margin:0;
+  font-size:20px;
+  letter-spacing:-.4px;
+}
+
+.brand p{
+  margin:3px 0 0;
+  color:var(--muted);
+  font-size:13px;
+}
+
+.status{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 13px;
+  border:1px solid var(--border);
+  background:rgba(13,20,34,.8);
+  border-radius:999px;
+  font-size:12px;
+  color:#aab6c8;
+}
+
+.status-dot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:var(--success);
+  box-shadow:0 0 10px var(--success);
+}
+
+/* LAYOUT */
+
+.grid{
+  display:grid;
+  grid-template-columns:minmax(0,1.7fr) minmax(300px,.8fr);
+  gap:20px;
+}
+
+.panel{
+  background:rgba(13,20,34,.88);
+  border:1px solid var(--border);
+  border-radius:18px;
+  overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,.2);
+}
+
+.panel-header{
+  padding:18px 20px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.panel-title{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.panel-title h2{
+  font-size:14px;
+  margin:0;
+}
+
+.panel-title span{
+  color:var(--muted);
+  font-size:12px;
+}
+
+/* CHAT */
+
+.chat{
+  display:flex;
+  flex-direction:column;
+  height:680px;
+}
+
+.modes{
+  padding:12px 16px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  gap:6px;
+}
+
+.mode{
+  flex:1;
+  padding:10px;
+  border:0;
+  border-radius:9px;
+  background:transparent;
+  color:var(--muted);
+  cursor:pointer;
+  font-weight:600;
+  font-size:12px;
+  transition:.2s;
+}
+
+.mode:hover{
+  background:var(--panel2);
+  color:var(--text);
+}
+
+.mode.active{
+  background:rgba(56,189,248,.12);
+  color:var(--accent);
+  box-shadow:inset 0 0 0 1px rgba(56,189,248,.18);
+}
+
+.messages{
+  flex:1;
+  overflow-y:auto;
+  padding:24px;
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+
+.message{
+  max-width:78%;
+  padding:13px 16px;
+  border-radius:15px;
+  font-size:14px;
+  line-height:1.55;
+  animation:appear .25s ease;
+}
+
+@keyframes appear{
+  from{opacity:0;transform:translateY(5px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+.message.agent{
+  align-self:flex-start;
+  background:var(--panel2);
+  border:1px solid var(--border);
+  border-bottom-left-radius:4px;
+}
+
+.message.user{
+  align-self:flex-end;
+  background:linear-gradient(135deg,#0284c7,#2563eb);
+  border-bottom-right-radius:4px;
+}
+
+.message-label{
+  font-size:10px;
+  color:var(--muted);
+  margin-bottom:5px;
+  text-transform:uppercase;
+  letter-spacing:.7px;
+}
+
+.message.user .message-label{
+  color:rgba(255,255,255,.65);
+}
+
+/* INPUT */
+
+.composer{
+  padding:16px;
+  border-top:1px solid var(--border);
+}
+
+.input-wrap{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  background:var(--panel2);
+  border:1px solid var(--border);
+  border-radius:13px;
+  padding:6px;
+  transition:.2s;
+}
+
+.input-wrap:focus-within{
+  border-color:rgba(56,189,248,.55);
+  box-shadow:0 0 0 3px rgba(56,189,248,.08);
+}
+
+input{
+  flex:1;
+  min-width:0;
+  background:transparent;
+  border:0;
+  outline:0;
+  color:var(--text);
+  padding:12px;
+  font-size:14px;
+}
+
+input::placeholder{
+  color:#536177;
+}
+
+.send{
+  width:42px;
+  height:42px;
+  border:0;
+  border-radius:10px;
+  background:var(--accent);
+  color:#03111c;
+  cursor:pointer;
+  font-size:17px;
+  font-weight:bold;
+  transition:.2s;
+}
+
+.send:hover{
+  transform:translateY(-1px);
+  box-shadow:0 8px 20px rgba(56,189,248,.2);
+}
+
+/* SIDEBAR */
+
+.sidebar{
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+}
+
+.card{
+  background:rgba(13,20,34,.88);
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:20px;
+}
+
+.card h3{
+  margin:0 0 5px;
+  font-size:14px;
+}
+
+.card-sub{
+  color:var(--muted);
+  font-size:12px;
+}
+
+/* METRICS */
+
+.metric-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:18px;
+}
+
+.metric{
+  padding:16px;
+  background:var(--panel2);
+  border:1px solid var(--border);
+  border-radius:12px;
+}
+
+.metric-value{
+  font-size:24px;
+  font-weight:750;
+  color:var(--accent);
+}
+
+.metric-name{
+  color:var(--muted);
+  font-size:11px;
+  margin-top:4px;
+}
+
+/* MEMORY */
+
+.memory{
+  margin-top:16px;
+}
+
+.memory-bar{
+  height:7px;
+  background:#182235;
+  border-radius:99px;
+  overflow:hidden;
+}
+
+.memory-progress{
+  height:100%;
+  width:32%;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  border-radius:99px;
+}
+
+.memory-info{
+  display:flex;
+  justify-content:space-between;
+  margin-top:8px;
+  color:var(--muted);
+  font-size:11px;
+}
+
+/* UPLOAD */
+
+.upload{
+  margin-top:16px;
+  border:1px dashed #304058;
+  border-radius:13px;
+  padding:25px 15px;
+  text-align:center;
+  cursor:pointer;
+  transition:.2s;
+}
+
+.upload:hover{
+  border-color:var(--accent);
+  background:rgba(56,189,248,.04);
+}
+
+.upload-icon{
+  font-size:27px;
+  margin-bottom:8px;
+}
+
+.upload strong{
+  display:block;
+  font-size:13px;
+}
+
+.upload span{
+  color:var(--muted);
+  font-size:11px;
+}
+
+/* ACTIVITY */
+
+.activity{
+  margin-top:15px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.activity-item{
+  display:flex;
+  gap:10px;
+  font-size:12px;
+  color:#aab6c8;
+}
+
+.activity-dot{
+  width:7px;
+  height:7px;
+  background:var(--accent);
+  border-radius:50%;
+  margin-top:5px;
+  flex:none;
+}
+
+.activity-time{
+  display:block;
+  color:#526078;
+  font-size:10px;
+  margin-top:3px;
+}
+
+/* MOBILE */
+
+@media(max-width:850px){
+  .grid{
+    grid-template-columns:1fr;
+  }
+
+  .chat{
+    height:600px;
+  }
+
+  .header{
+    align-items:flex-start;
+    gap:15px;
+  }
+
+  .status{
+    display:none;
+  }
+}
+
+@media(max-width:520px){
+  .app{
+    width:94%;
+    margin:16px auto;
+  }
+
+  .message{
+    max-width:90%;
+  }
+
+  .metric-grid{
+    grid-template-columns:1fr 1fr;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="brand">
+      <div class="logo">✦</div>
+      <div>
+        <h1>Evolving AI Agent</h1>
+        <p>Adaptive memory • RAG • conversational learning</p>
+      </div>
     </div>
 
-    <script>
-        // 🛠️ CONFIGURATION LINKAGE WRAPPER
-        const BACKEND_URL = "https://tabulachild-ai.onrender.com/"; 
+    <div class="status">
+      <span class="status-dot"></span>
+      Agent online
+    </div>
+  </header>
 
-        let currentMode = "CHAT";
+  <main class="grid">
 
-        function switchMode(mode) {
-            currentMode = mode;
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById('tab-' + mode).classList.add('active');
-            
-            let hint = "Chat naturally... I will search my database and previous conversations!";
-            if (mode === "TRAIN") hint = "Format fact: concept -> response data (e.g. your name -> Leo)";
-            document.getElementById('console-input').placeholder = hint;
+    <!-- CHAT -->
+    <section class="panel chat">
+
+      <div class="panel-header">
+        <div class="panel-title">
+          <div>🤖</div>
+          <div>
+            <h2>Agent Workspace</h2>
+            <span id="mode-label">Conversation mode</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modes">
+        <button id="tab-CHAT"
+                class="mode active"
+                onclick="switchMode('CHAT')">
+          💬 Chat
+        </button>
+
+        <button id="tab-TRAIN"
+                class="mode"
+                onclick="switchMode('TRAIN')">
+          🧠 Teach
+        </button>
+      </div>
+
+      <div class="messages" id="console-logs">
+
+        <div class="message agent">
+          <div class="message-label">AI Agent</div>
+          Hello! I'm ready to learn and interact. Ask me something, or switch to
+          <strong>Teach</strong> mode to add new knowledge.
+        </div>
+
+      </div>
+
+      <div class="composer">
+
+        <div class="input-wrap">
+
+          <input
+            type="text"
+            id="console-input"
+            placeholder="Ask your agent anything..."
+            onkeypress="checkEnter(event)"
+          >
+
+          <button class="send" onclick="sendMessage()">
+            ↑
+          </button>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+      <!-- TELEMETRY -->
+      <section class="card">
+
+        <h3>Agent telemetry</h3>
+        <div class="card-sub">Live memory and learning state</div>
+
+        <div class="metric-grid">
+
+          <div class="metric">
+            <div class="metric-value" id="nodes-counter">0</div>
+            <div class="metric-name">Memory nodes</div>
+          </div>
+
+          <div class="metric">
+            <div class="metric-value" id="interaction-counter">0</div>
+            <div class="metric-name">Interactions</div>
+          </div>
+
+        </div>
+
+        <div class="memory">
+
+          <div class="memory-bar">
+            <div class="memory-progress" id="memory-progress"></div>
+          </div>
+
+          <div class="memory-info">
+            <span>Memory utilization</span>
+            <span id="memory-percent">32%</span>
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- DOCUMENTS -->
+      <section class="card">
+
+        <h3>Knowledge vault</h3>
+        <div class="card-sub">
+          Upload documents to expand agent memory
+        </div>
+
+        <div
+          class="upload"
+          onclick="document.getElementById('file-picker').click()"
+        >
+
+          <div class="upload-icon">📄</div>
+
+          <strong>Drop a PDF here</strong>
+
+          <span id="upload-status">
+            or click to browse
+          </span>
+
+          <input
+            type="file"
+            id="file-picker"
+            hidden
+            accept=".pdf"
+            onchange="uploadPDFToServer()"
+          >
+
+        </div>
+
+      </section>
+
+
+      <!-- ACTIVITY -->
+      <section class="card">
+
+        <h3>Recent activity</h3>
+
+        <div class="activity" id="activity">
+
+          <div class="activity-item">
+            <span class="activity-dot"></span>
+            <div>
+              Agent initialized
+              <span class="activity-time">Just now</span>
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+    </aside>
+
+  </main>
+
+</div>
+
+
+<script>
+
+const BACKEND_URL =
+  "https://tabulachild-ai.onrender.com";
+
+let currentMode = "CHAT";
+let interactionCount = 0;
+
+
+/* MODE */
+
+function switchMode(mode){
+
+  currentMode = mode;
+
+  document
+    .querySelectorAll(".mode")
+    .forEach(btn => btn.classList.remove("active"));
+
+  document
+    .getElementById("tab-" + mode)
+    .classList.add("active");
+
+  const input =
+    document.getElementById("console-input");
+
+  const label =
+    document.getElementById("mode-label");
+
+  if(mode === "TRAIN"){
+
+    input.placeholder =
+      "Teach a fact, preference, or concept...";
+
+    label.innerText =
+      "Teaching mode";
+
+  }else{
+
+    input.placeholder =
+      "Ask your agent anything...";
+
+    label.innerText =
+      "Conversation mode";
+  }
+}
+
+
+/* ENTER */
+
+function checkEnter(event){
+
+  if(event.key === "Enter"){
+    sendMessage();
+  }
+
+}
+
+
+/* SEND */
+
+async function sendMessage(){
+
+  const input =
+    document.getElementById("console-input");
+
+  const text =
+    input.value.trim();
+
+  if(!text) return;
+
+  appendLog(text,"user");
+
+  input.value = "";
+
+  interactionCount++;
+
+  document
+    .getElementById("interaction-counter")
+    .innerText = interactionCount;
+
+  addActivity(
+    currentMode === "CHAT"
+      ? "Conversation processed"
+      : "New knowledge submitted"
+  );
+
+  try{
+
+    const response =
+      await fetch(
+        `${BACKEND_URL}/interact`,
+        {
+          method:"POST",
+          headers:{
+            "Content-Type":"application/json"
+          },
+          body:JSON.stringify({
+            mode:currentMode,
+            payload:text
+          })
         }
+      );
 
-        function checkEnter(e) { if (e.key === 'Enter') sendMessage(); }
+    const data =
+      await response.json();
 
-        function sendMessage() {
-            const inputField = document.getElementById('console-input');
-            const dataText = inputField.value.trim();
-            if(!dataText) return;
+    if(data.output){
 
-            appendLog(dataText, 'user');
-            inputField.value = '';
+      appendLog(
+        data.output,
+        "agent"
+      );
 
-            fetch(`${BACKEND_URL}/interact`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ mode: currentMode, payload: dataText })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if(data.output) appendLog(data.output, 'agent');
-                document.getElementById('nodes-counter').innerText = data.tokens;
-            });
+    }
+
+    if(data.tokens !== undefined){
+
+      document
+        .getElementById("nodes-counter")
+        .innerText = data.tokens;
+
+      updateMemory(data.tokens);
+    }
+
+  }catch(error){
+
+    appendLog(
+      "Connection error. Please check that the backend is running.",
+      "agent"
+    );
+
+  }
+
+}
+
+
+/* PDF */
+
+async function uploadPDFToServer(){
+
+  const picker =
+    document.getElementById("file-picker");
+
+  if(!picker.files.length) return;
+
+  const file =
+    picker.files[0];
+
+  const status =
+    document.getElementById("upload-status");
+
+  status.innerText =
+    "⏳ Processing " + file.name + "...";
+
+  const form =
+    new FormData();
+
+  form.append("file",file);
+
+  try{
+
+    const response =
+      await fetch(
+        `${BACKEND_URL}/upload`,
+        {
+          method:"POST",
+          body:form
         }
+      );
 
-        function uploadPDFToServer() {
-            const picker = document.getElementById('file-picker');
-            if(picker.files.length === 0) return;
-            
-            const dataObj = new FormData();
-            dataObj.append('file', picker.files[0]);
-            document.getElementById('upload-status').innerText = "⏳ Extracting text nodes into blank tracking vector list...";
+    const data =
+      await response.json();
 
-            fetch(`${BACKEND_URL}/upload`, { method: 'POST', body: dataObj })
-            .then(res => res.json())
-            .then(data => {
-                document.getElementById('upload-status').innerText = data.message;
-                document.getElementById('nodes-counter').innerText = data.tokens;
-                appendLog("System Update: " + data.message, 'agent');
-            });
-        }
+    status.innerText =
+      "✓ " + (data.message || "Document indexed");
 
-        function appendLog(text, role) {
-            const box = document.getElementById('console-logs');
-            const div = document.createElement('div');
-            div.className = `msg ${role}`;
-            div.innerText = text;
-            box.appendChild(div);
-            box.scrollTop = box.scrollHeight;
-        }
-    </script>
+    if(data.tokens !== undefined){
+
+      document
+        .getElementById("nodes-counter")
+        .innerText = data.tokens;
+
+      updateMemory(data.tokens);
+
+    }
+
+    addActivity(
+      "Document indexed: " + file.name
+    );
+
+    appendLog(
+      "Knowledge vault updated: " +
+      (data.message || file.name),
+      "agent"
+    );
+
+  }catch(error){
+
+    status.innerText =
+      "Upload failed. Try again.";
+
+  }
+
+}
+
+
+/* CHAT MESSAGE */
+
+function appendLog(text,role){
+
+  const box =
+    document.getElementById("console-logs");
+
+  const div =
+    document.createElement("div");
+
+  div.className =
+    `message ${role}`;
+
+  const label =
+    role === "user"
+      ? "You"
+      : "AI Agent";
+
+  div.innerHTML =
+    `<div class="message-label">${label}</div>
+     ${escapeHTML(text)}`;
+
+  box.appendChild(div);
+
+  box.scrollTop =
+    box.scrollHeight;
+}
+
+
+/* ACTIVITY */
+
+function addActivity(text){
+
+  const activity =
+    document.getElementById("activity");
+
+  const item =
+    document.createElement("div");
+
+  item.className =
+    "activity-item";
+
+  item.innerHTML =
+    `<span class="activity-dot"></span>
+     <div>
+       ${escapeHTML(text)}
+       <span class="activity-time">Just now</span>
+     </div>`;
+
+  activity.prepend(item);
+
+}
+
+
+/* MEMORY */
+
+function updateMemory(tokens){
+
+  const percent =
+    Math.min(100,Math.max(5,
+      Math.round(tokens / 100)
+    ));
+
+  document
+    .getElementById("memory-progress")
+    .style.width =
+    percent + "%";
+
+  document
+    .getElementById("memory-percent")
+    .innerText =
+    percent + "%";
+
+}
+
+
+/* SECURITY */
+
+function escapeHTML(value){
+
+  const div =
+    document.createElement("div");
+
+  div.innerText = value;
+
+  return div.innerHTML;
+
+}
+
+</script>
+
 </body>
 </html>
