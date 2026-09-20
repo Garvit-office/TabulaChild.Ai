@@ -1,0 +1,6 @@
+ torch
+   flask
+   pypdf
+   sentence-transformers
+   requests
+   beautifulsoup4
